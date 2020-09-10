@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+<div id="app" class="center" style="width: 80%">
+    <div id="search">
+        <el-input
+                style="width: 30%;"
+                placeholder="请输入书名 作者 出版社"
+                v-model="name"
+                prefix-icon="el-icon-search">
+        </el-input>
+        <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
+        <el-button type="primary" icon="el-icon-plus" @click="openDialog">添加</el-button>
+        <el-button type="primary" icon="el-icon-delete" @click="removeBatch(sels)"
+                   :disabled="this.sels.length === 0||this.disabled">批量删除
+        </el-button>
+    </div>
+    <el-table
+            :data="tableData"
+            stripe
+            style="width: 100%"
+            ref="table"
+            @selection-change="selsChange"
+            @sort-change="handleSortChange">
+        <el-table-column type="selection" width="55" reserve-selection=""></el-table-column>
+        <el-table-column
+                prop="name"
+                label="书名">
+        </el-table-column>
+        <el-table-column
+                prop="author"
+                label="作者">
+        </el-table-column>
+        <el-table-column
+                prop="publisher"
+                label="出版社">
+        </el-table-column>
+        <el-table-column
+                prop="price"
+                label="价格"
+                sortable="custom">
+        </el-table-column>
+        <el-table-column
+                prop="updateTime"
+                label="更新时间"
+                sortable="custom">
+        </el-table-column>
+        <el-table-column
+                fixed="right"
+                label="操作">
+            <template slot-scope="scope">
+                <el-button type="text" size="small" @click='openDialog(scope.row)'>编辑</el-button>
+                <el-button type="text" size="small" @click="deleteBook(scope.row.id, scope.$index)">删除</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+    <el-pagination
+            layout="total, prev, pager, next"
+            :total="total"
+            :page-size="10"
+            :current-page="params.index"
+            @current-change="handleCurrentChange">
+    </el-pagination>
+
+    <el-dialog :visible.sync="dialogFormVisible">
+        <div slot="title">{{dialogTitle}}</div>
+        <el-form :model="book">
+            <el-form-item label="书名" :label-width="formLabelWidth">
+                <el-input v-model="book.name" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="作者" :label-width="formLabelWidth">
+                <el-input v-model="book.author" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="出版社" :label-width="formLabelWidth">
+                <el-input v-model="book.publisher" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="价格" :label-width="formLabelWidth">
+                <el-input-number v-model="book.price" :precision="2" :step="0.1"></el-input-number>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button type="primary" @click="saveOrUpdateBook">确 定</el-button>
+        </div>
+    </el-dialog>
+</div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui@2.4.5/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData: [],
+                total: 0,
+                name: '',
+                dialogFormVisible: false,
+                formLabelWidth: '120px',
+                dialogTitle: '',
+                book: {
+                    id: '',
+                    name: '',
+                    author: '',
+                    publisher: '',
+                    price: 0
+                },
+                sels: [],//选中的值显示
+                start: 0,
+                size: 10,
+                params: {index: 0, size: 10},
+                //排序的规则
+                order: "",
+                //排序所根据的字段
+                prop: ""
+            }
+        },
+        mounted() {
+            this.handleCurrentChange(1);
+        },
+        methods: {
+            handleCurrentChange: function (page, column) {
+                //判断是否有排序
+                if (column != null) {
+                    this.order = column.order == null ? "" : column.order;
+                    this.prop = column.prop == null ? "" : column.prop;
+                }
+                console.log(this.order);
+                //清空当前已选中的信息
+                this.$refs.table.clearSelection(this.sels);
+                this.params.index = page;
+                console.log("当前页：" + page);
+                //当前搜索框中的搜寻条件
+                let name = this.name;
+                if (typeof name === 'undefined') {
+                    name = '';
+                }
+                axios.get('/books', {
+                    params: {
+                        page: page,  //当前的页码
+                        param: name,  //搜索条件
+                        order: this.order,
+                        prop: this.prop
+                    }
+                }).then(response = > {
+
+                    this.tableData = response.data.content;
+                this.total = response.data.totalElements;
+            })
+                ;
+            },
+            search: function () {
+                this.handleCurrentChange(1);
+            },
+            openDialog: function (row) {
+                console.info("id: " + row.id);
+                this.dialogFormVisible = true;
+                if (typeof row.id === 'undefined') {
+                    this.dialogTitle = "添加";
+                    this.book.id = '';
+                    this.book.name = '';
+                    this.book.author = '';
+                    this.book.publisher = '';
+                    this.book.price = 0;
+                } else {
+                    this.dialogTitle = "编辑";
+                    this.book.id = row.id;
+                    this.book.name = row.name;
+                    this.book.author = row.author;
+                    this.book.publisher = row.publisher;
+                    this.book.price = row.price;
+                }
+            },
+            saveOrUpdateBook: function () {
+                axios.post('/books/saveOrUpdate', this.book).then(response = > {
+                    // alert("response:" + response);
+                    this.$message({
+                        type: 'success',
+                        message: response.data
+                    });
+                this.handleCurrentChange(1);
+                this.dialogFormVisible = false;
+            }).
+                catch(error = > {
+                    this.$message({
+                        type: 'error',
+                        message: '操作失败'
+                    });
+            })
+                ;
+            },
+            deleteBook: function (id, index) {
+                this.$confirm('确认删除这本书吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() = > {
+                    axios.post('/books/delete', {
+                        id: id
+                    }).then(response = > {
+                        this.$message({
+                            type: 'success',
+                            message: response.data
+                        });
+                this.handleCurrentChange(1)
+            })
+                ;
+            }).
+                catch(() = > {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+            })
+                ;
+            },
+
+            selsChange(sels) {
+
+                var ids = "";
+                this.sels = sels;
+                for (let element of this.sels) {
+                    ids += element.id + ",";
+                }
+                return ids;
+            },
+            removeBatch: function (rows) {
+                var ids = [];
+                rows.forEach(element = > {
+                    ids.push(element.id)
+                }
+            )
+                this.$confirm('确认删除所有选中的书吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() = > {
+                    axios.post('/books/deleteList?ids=' + ids).then(response = > {
+                        this.$message({
+                            type: 'success',
+                            message: response.data
+                        });
+                this.handleCurrentChange(1)
+            })
+                ;
+            }).
+                catch(() = > {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+            })
+                ;
+
+            },
+            //排序
+            handleSortChange: function (column) {
+                this.handleCurrentChange(1, column);
+            }
+        }
+    });
+</script>
+<style>
+    .center {
+        margin: auto;
+        width: auto;
+        padding: 10px;
+    }
+
+    .right {
+        position: absolute;
+        right: 0px;
+        width: auto;
+        padding: 10px;
+    }
+</style>
+</html>
