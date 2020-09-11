@@ -16,9 +16,7 @@
         </el-input>
         <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
         <el-button type="primary" icon="el-icon-plus" @click="openDialog">添加</el-button>
-        <el-button type="primary" icon="el-icon-delete" @click="removeBatch(sels)"
-                   :disabled="this.sels.length === 0||this.disabled">批量删除
-        </el-button>
+        <el-button  type="primary" icon="el-icon-delete"  @click="removeBatch(sels)" :disabled="this.sels.length === 0||this.disabled">批量删除</el-button>
     </div>
     <el-table
             :data="tableData"
@@ -150,12 +148,11 @@
                         order: this.order,
                         prop: this.prop
                     }
-                }).then(response = > {
+                }).then(response => {
 
                     this.tableData = response.data.content;
                 this.total = response.data.totalElements;
-            })
-                ;
+            });
             },
             search: function () {
                 this.handleCurrentChange(1);
@@ -180,7 +177,7 @@
                 }
             },
             saveOrUpdateBook: function () {
-                axios.post('/books/saveOrUpdate', this.book).then(response = > {
+                axios.post('/books/saveOrUpdate', this.book).then(response => {
                     // alert("response:" + response);
                     this.$message({
                         type: 'success',
@@ -188,77 +185,68 @@
                     });
                 this.handleCurrentChange(1);
                 this.dialogFormVisible = false;
-            }).
-                catch(error = > {
+            }).catch(error => {
                     this.$message({
                         type: 'error',
                         message: '操作失败'
                     });
-            })
-                ;
+            });
             },
             deleteBook: function (id, index) {
                 this.$confirm('确认删除这本书吗?', '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
                     type: 'warning'
-                }).then(() = > {
+                }).then(() => {
                     axios.post('/books/delete', {
                         id: id
-                    }).then(response = > {
+                    }).then(response => {
                         this.$message({
                             type: 'success',
                             message: response.data
                         });
                 this.handleCurrentChange(1)
-            })
-                ;
-            }).
-                catch(() = > {
+            });
+            }).catch(() => {
                     this.$message({
                         type: 'info',
                         message: '已取消删除'
                     });
-            })
-                ;
+            });
             },
 
             selsChange(sels) {
 
-                var ids = "";
+                var ids ="";
                 this.sels = sels;
-                for (let element of this.sels) {
-                    ids += element.id + ",";
+                for(let element of this.sels){
+                    ids += element.id+",";
                 }
                 return ids;
             },
-            removeBatch: function (rows) {
+            removeBatch:function(rows){
                 var ids = [];
-                rows.forEach(element = > {
+                rows.forEach(element => {
                     ids.push(element.id)
-                }
-            )
+                })
                 this.$confirm('确认删除所有选中的书吗?', '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
                     type: 'warning'
-                }).then(() = > {
-                    axios.post('/books/deleteList?ids=' + ids).then(response = > {
+                }).then(() => {
+                    axios.post('/books/deleteList?ids='+ids).then(response => {
                         this.$message({
                             type: 'success',
                             message: response.data
                         });
                 this.handleCurrentChange(1)
-            })
-                ;
-            }).
-                catch(() = > {
+            });
+            }).catch(() => {
                     this.$message({
                         type: 'info',
                         message: '已取消删除'
                     });
-            })
-                ;
+            });
 
             },
             //排序
