@@ -149,10 +149,9 @@
                         prop: this.prop
                     }
                 }).then(response => {
-
                     this.tableData = response.data.content;
-                this.total = response.data.totalElements;
-            });
+                    this.total = response.data.totalElements;
+                });
             },
             search: function () {
                 this.handleCurrentChange(1);
@@ -183,14 +182,14 @@
                         type: 'success',
                         message: response.data
                     });
-                this.handleCurrentChange(1);
-                this.dialogFormVisible = false;
-            }).catch(error => {
+                    this.handleCurrentChange(1);
+                    this.dialogFormVisible = false;
+                }).catch(error => {
                     this.$message({
                         type: 'error',
                         message: '操作失败'
                     });
-            });
+                });
             },
             deleteBook: function (id, index) {
                 this.$confirm('确认删除这本书吗?', '提示', {
@@ -205,18 +204,17 @@
                             type: 'success',
                             message: response.data
                         });
-                this.handleCurrentChange(1)
-            });
-            }).catch(() => {
+                        this.handleCurrentChange(1)
+                    });
+                }).catch(() => {
                     this.$message({
                         type: 'info',
                         message: '已取消删除'
                     });
-            });
+                });
             },
 
             selsChange(sels) {
-
                 var ids ="";
                 this.sels = sels;
                 for(let element of this.sels){
@@ -239,15 +237,14 @@
                             type: 'success',
                             message: response.data
                         });
-                this.handleCurrentChange(1)
-            });
-            }).catch(() => {
+                        this.handleCurrentChange(1)
+                    });
+                }).catch(() => {
                     this.$message({
                         type: 'info',
                         message: '已取消删除'
                     });
-            });
-
+                });
             },
             //排序
             handleSortChange: function (column) {
